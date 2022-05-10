@@ -1,0 +1,79 @@
+Organization Hierarchy
+======================
+customer
+ - sub customer 1
+     * Devices
+ - sub customer 2
+     * Devices
+ - sub customer 3
+     * Devices
+
+
+Current Architecture
+====================
+React UI -> Spring Boot App -> Apache Nifi > MongoDB
+
+To Do
+=====
+Set up Mongo DB
+Integrate Sensor Spring Boot App with MongoDB
+Test end-to-end flow
+
+MongoDB Embedded Documents
+==========================
+Parent customer entity
+ -> id
+ -> org id
+ -> name
+ -> List of sub customer entities
+
+Sub customer entity
+ -> id
+ -> org id
+ -> parent org id
+ -> name
+ -> List of device entities
+ 
+Device entity
+ -> id
+ -> parameters
+
+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 - git token
+
+1. nifi deployment
+2. nifi testing
+3. rabbitmq deployment
+4. rabbitmq testing
+5. kafka deployment
+6. kafka testing
+7. finalize the message broker tool
+
+nifi creds
+admin/admin@123456
+
+100 devices
+every 5 seconds
+
+100*5*12
+
+{
+"deviceId": 1003,
+"temperature": 20.3,
+"batteryVoltage": 20.4,
+"is_on": 1
+}
+
+{
+"deviceId": 1003,
+"temperature": 20.6,
+"batteryVoltage": 20.6,
+"is_on": 1
+}
+
+{
+    "email": "test@admin.com",
+    "password": "testadmin"
+}
+
+curl -H 'Content-Type: application/json' -X POST -d '{'deviceId': "1001", "temperature": "30.3", "battery_voltage": "20.4", "is_on": "1"}' http://localhost:8889/curlRequestListener
+

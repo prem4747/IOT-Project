@@ -1,0 +1,62 @@
+CREATE TABLE sensor_app (
+  id INT NOT NULL,
+  device_id char(36) NOT NULL,
+  temperature float default null,
+  battery_voltage float default null,
+  is_on boolean default null,
+  timestamp timestamp default now(),
+  PRIMARY KEY (id)
+) ENGINE=InnoDB;
+
+CREATE TABLE registered_devices (
+  id INT NOT NULL,
+  device_id char(36) NOT NULL,
+  org_id char(36)NOT NULL,
+  PRIMARY KEY (device_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE organizations (
+  id INT NOT NULL,
+  org_id char(36) NOT NULL,
+  parent_org_id char(36) NULL,
+  org_name char(36) NOT NULL,
+  PRIMARY KEY (org_id)
+) ENGINE=InnoDB;
+
+
+User Login Screen
+-----------------
+
+Screen to show customer accounts
+================================
+select org_name from organizations where parent_org_id  = "Org1"
+
+Final Mongo Query
+-----------------
+db.Organizations.aggregate([{ $match: { parentOrgId: "Org1" }}, { $project: { orgName: 1, _id: 0 }}, { $sort: { _id: -1 }}, { $limit: 100 }])
+
+Screen to show devices registered
+=================================
+select device_id, org_id from registered_devices
+where org_id in (select org_id from organizations where org_id = "Org1")
+UNION
+select device_id, org_id from registered_devices
+where org_id in (select org_id from organizations where parent_org_id = "Org1")
+
+Final Mongo Query
+-----------------
+db.RegisteredDevices.aggregate([{ $lookup: { from: "Organizations", localField: "orgId", foreignField: "_id", as: "Organizations_docs" } }, { $match: { Organizations_docs: { $ne: [] } } }, { $addFields: { Organizations_docs: { $arrayElemAt: ["$Organizations_docs", 0] } } }, { $match: { "Organizations_docs._id": "Org1" } }, { $project: { _id: 1, orgId: 1 } }, { $unionWith: { coll: "RegisteredDevices", pipeline: [{ $lookup: { from: "Organizations", localField: "orgId", foreignField: "_id", as: "Organizations_docs" } }, { $match: { Organizations_docs: { $ne: [] } } },{ $addFields: { Organizations_docs: { $arrayElemAt: ["$Organizations_docs", 0] } } }, { $match: { "Organizations_docs.parentOrgId": "Org1" } }, { $project: { _id: 1, orgId: 1 } }] } },  { $group: { _id: "$$ROOT" } }, { $replaceRoot: { newRoot: "$_id" } },{ $sort: { _id: -1 } },{ $limit: 100 }]);
+
+Not Final
+---------
+db.RegisteredDevices.aggregate([{ $match: { $or: [{ orgId: { $in: db.Organizations.aggregate([  { $match : { _id: "Org1" } },  { $project: {  _id: 1 } },  { $sort: { _id: 1 }} ]).map(function(doc){ return doc._id})  } }, { orgId: { $in: db.Organizations.aggregate([  { $match: { parentOrgId: "Org1" } },  { $project: {  _id: 1 } },  { $sort: { _id: 1 }}  ]).map(function(doc){ return doc._id}) } }] } }, { $project: { _id: 1, orgId: 1 } }, { $sort: { _id: 1 } }, { $limit: 100 }])
+
+Screen to show device metrics
+=============================
+select * from sensor_app 
+where device_id in 
+(select device_id from device_table where acc_id in (select acc_id from accounts where org_id = "Org1")
+UNION
+select device_id from device_table where org_id in (select org_id from organizations where org_id = "Org1")
+)
+

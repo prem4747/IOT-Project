@@ -1,0 +1,110 @@
+works
+
+db.RegisteredDevices.aggregate([
+	{ $lookup: {
+		"from": "Organizations",
+		"localField": "orgId",
+		"foreignField": "_id",
+		"as": "matching_orgs"
+		}
+	},
+	{ $match: {
+		'matching_orgs.parentOrgId': {
+			$in: ["Org1"]
+			}
+		}
+	},
+	
+	{ $project: {
+		_id: 1,
+		orgId: 1
+		}
+	}
+])
+
+
+
+
+db.RegisteredDevices.aggregate([
+	{ $match: { 
+		$or: [ 
+			{ "$lookup": {
+				"from": "Organizations",
+				"localField": "orgId",
+				"foreignField": "_id",
+				"as": "matching_orgs"
+				}
+			},
+			{ $match: {
+				'matching_orgs._id': { $in: ["Org1"] }
+				}
+			},
+			{ $lookup: {
+				"from": "Organizations",
+				"localField": "orgId",
+				"foreignField": "parentOrgId",
+				"as": "matching_orgs"
+				}
+			},
+			{ $match: {
+				'matching_orgs.parentOrgId': { $in: ["Org1"] }
+				}
+			}
+		]
+	}
+	}
+])
+
+
+db.RegisteredDevices.aggregate([
+
+	{ $match: { 
+		$or: [{ 
+			orgId: { 
+				$in: 
+					db.Organizations.aggregate([  
+						{ $match : { 
+							_id: "Org1" 
+							} 
+						},  { 
+							$project: {  
+								_id: 1 
+							} 
+						},  { 
+							$sort: { 
+								_id: 1 
+							}
+						}
+						]).map(function(doc){ return doc._id})}}, 
+			{ 
+			orgId: { 
+				$in: 
+					db.Organizations.aggregate([  
+						{ $match: {
+							parentOrgId: "Org1" 
+							} 
+						},  { 
+							$project: { 
+								_id: 1 
+								} 
+							},  { 
+							$sort: {
+								_id: 1 
+								}
+							}  
+						]).map(function(doc){ return doc._id})}}
+		] 
+	}}, 
+	{ $project: { 
+		_id: 1, orgId: 1 
+		}
+	},  { 
+		$sort: { 
+			_id: 1 
+			} 
+		}, 
+		{ 
+		$limit: 100 
+		}
+])	
+

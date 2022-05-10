@@ -1,0 +1,25 @@
+UI
+==
+1. Design screen layout
+2. Coding for screens
+3. Integrate with API layer
+4. Test Authentication and Authorization
+
+API
+===
+1. Get queries for Mongo Integration - Done
+2. Pagination - Done with manual pagination
+3. Integrate existing API layer with MongoDB including Authentication and Authorization - Done
+4. Test and Validate
+
+DB
+==
+1. Archival
+2. Purging
+3. Restoration
+
+Storage/Compute
+===============
+1. Depends on deployment environment
+2. Need to decide on scalability, HA and FT
+3. Deployment Method for the Application
